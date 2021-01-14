@@ -1,23 +1,36 @@
 import React from 'react';
-import Slider from '@react-native-community/slider';
 import {Text, View, StyleSheet} from 'react-native';
 import COLORS from './color';
+import {useTrackPlayerProgress} from 'react-native-track-player';
+import Slider from 'react-native-slider';
 
-function PlayerSlider() {
+function PlayerSlider({onSeek}) {
+    const { position, duration } = useTrackPlayerProgress()
+
+    const formatTime = (secs) => {
+        let minutes = Math.floor(secs / 60);
+        let seconds = Math.ceil(secs - minutes * 60);
+
+        if (seconds < 10) seconds = `0${seconds}`;
+
+        return `${minutes}:${seconds}`;
+    };
+
     return (
         <View style={styles.container}>
             <Slider
                 style={styles.slider}
                 minimumValue={0}
-                value={0.3}
-                maximumValue={1}
+                value={position}
+                maximumValue={duration}
+                onSlidingComplete={val => onSeek(val)}
                 thumbTintColor={COLORS.primary}
                 minimumTrackTintColor={COLORS.primary}
                 maximumTrackTintColor={COLORS.sliderTrack}
             />
             <View style={styles.content}>
-                <Text style={styles.left}>0:00</Text>
-                <Text style={styles.right}>0:00</Text>
+                <Text style={styles.left}>{formatTime(position)}</Text>
+                <Text style={styles.right}>{formatTime(duration)}</Text>
             </View>
         </View>
     )

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {
     FlatList,
     ImageBackground,
@@ -9,17 +9,65 @@ import {
     TouchableHighlight,
     View,
 } from 'react-native';
+import TrackPlayer from 'react-native-track-player';
 import Ionicon from 'react-native-vector-icons/Ionicons';
 import songs from './data';
 import FlatListItem from './FlatListItem';
-import PlayerSlider from './PlayerSlider';
 import PlayerController from './PlayerController';
 import COLORS from './color';
+import PlayerSlider from './PlayerSlider';
 
 function App() {
+    const [playlist, setPlaylist] = useState(songs);
+
+    useEffect(() => {
+        setupPlayer();
+    }, []);
+
+    const shufflePlaylist = () => {
+        setPlaylist(songs.sort(() => Math.random() - 0.5));
+    };
+
+    const setupPlayer = () => {
+        TrackPlayer.setupPlayer().then(async () => {
+            await TrackPlayer.add(playlist);
+            //TrackPlayer.play();
+            await TrackPlayer.updateOptions({
+                stopWithApp: false,
+                alwaysPauseOnInterruption: true,
+                capabilities: [
+                    TrackPlayer.CAPABILITY_PLAY,
+                    TrackPlayer.CAPABILITY_PAUSE,
+                    TrackPlayer.CAPABILITY_SKIP_TO_NEXT,
+                    TrackPlayer.CAPABILITY_SKIP_TO_PREVIOUS,
+                    TrackPlayer.CAPABILITY_STOP,
+                ],
+            });
+        });
+    };
 
     const onSongItemPress = (song) => {
 
+    };
+
+    const onSeek = async (val) => {
+        await TrackPlayer.seekTo(val);
+    };
+
+    const onPlay = async () => {
+        await TrackPlayer.play();
+    };
+
+    const onPause = async () => {
+        await TrackPlayer.pause();
+    };
+
+    const onNext = async () => {
+        await TrackPlayer.skipToNext();
+    };
+
+    const onPrevious = async () => {
+        await TrackPlayer.skipToPrevious();
     };
 
     return (
@@ -27,38 +75,43 @@ function App() {
             <StatusBar translucent backgroundColor="rgba(0, 0, 0, 0.5)" style={styles.statusBar}
                        barStyle="dark-content"/>
             <SafeAreaView style={styles.container}>
-                <ImageBackground style={styles.backgroundImage} source={require('../assets/images/faded.jpg')}>
-                    <View style={styles.header}>
-                        <View style={styles.appBar}>
-                            <Text style={styles.title}>Music Player</Text>
-                        </View>
-                        <View style={styles.headerContent}>
-                            <View style={styles.songContent}>
-                                <Text style={styles.songTitle}>Love To Dance</Text>
-                                <Text style={styles.songArtist}>PinkinLark LLC</Text>
-                            </View>
-                            <PlayerSlider/>
-                            <PlayerController/>
-                        </View>
-                    </View>
-                </ImageBackground>
                 <View>
-                    <FlatList
-                        data={songs}
-                        style={{zIndex: 5}}
-                        renderItem={({item, index}) =>
-                            <FlatListItem
-                                song={item}
-                                divider={index !== songs.length - 1}
-                                active="1"
-                                onPress={onSongItemPress}
-                            />
-                        }
-                        keyExtractor={(item) => item.id}
-                    />
-                    <TouchableHighlight style={styles.shuffleBtn}>
-                        <Ionicon size={24} color="#FFF" name="shuffle"/>
-                    </TouchableHighlight>
+                    <View>
+                        <ImageBackground style={styles.backgroundImage} source={require('../assets/images/faded.jpg')}>
+                            <View style={styles.header}>
+                                <View style={styles.appBar}>
+                                    <Text style={styles.title}>Music Player</Text>
+                                </View>
+                                <View style={styles.headerContent}>
+                                    <View style={styles.songContent}>
+                                        <Text style={styles.songTitle}>Love To Dance</Text>
+                                        <Text style={styles.songArtist}>PinkinLark LLC</Text>
+                                    </View>
+                                    <PlayerSlider onSeek={onSeek}/>
+                                    <PlayerController onNext={onNext} onPrev={onPrevious} onPause={onPause}
+                                                      onPlay={onPlay}/>
+                                </View>
+                            </View>
+                        </ImageBackground>
+                    </View>
+                    <View style={{flexGrow: 1}}>
+                        <FlatList
+                            data={playlist}
+                            contentContainerStyle={{flexGrow: 1}}
+                            renderItem={({item, index}) =>
+                                <FlatListItem
+                                    song={item}
+                                    divider={index !== songs.length - 1}
+                                    active="1"
+                                    onPress={onSongItemPress}
+                                />
+                            }
+                            keyExtractor={(item) => item.id.toString()}
+                        />
+                        <TouchableHighlight onPress={shufflePlaylist} style={styles.shuffleBtn}>
+                            <Ionicon size={24} color="#FFF" name="shuffle"/>
+                        </TouchableHighlight>
+                    </View>
                 </View>
             </SafeAreaView>
         </>
@@ -67,8 +120,7 @@ function App() {
 
 const styles = StyleSheet.create({
     container: {
-        backgroundColor: '#333',
-        height: '100%',
+        backgroundColor: '#000',
     },
     appBar: {
         paddingHorizontal: 20,
@@ -89,7 +141,7 @@ const styles = StyleSheet.create({
     songContent: {
         alignItems: 'center',
         justifyContent: 'center',
-        marginBottom: 15
+        marginBottom: 15,
     },
     songTitle: {
         fontSize: 18,

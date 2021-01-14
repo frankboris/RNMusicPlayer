@@ -1,10 +1,31 @@
 import React from 'react';
-import {StyleSheet, TouchableHighlight, View} from 'react-native';
+import {StyleSheet, TouchableHighlight, View, ActivityIndicator} from 'react-native';
 import Ionicon from 'react-native-vector-icons/Ionicons';
 import COLORS from './color';
+import TrackPlayer, {usePlaybackState} from 'react-native-track-player';
 
-function PlayerController() {
+function PlayerController({onPlay, onPause, onNext, onPrev}) {
+    const playbackState = usePlaybackState();
     const iconSize = 24;
+
+    const returnPlayBtn = (state) => {
+        switch (state) {
+            case TrackPlayer.STATE_PLAYING:
+                return <Ionicon size={iconSize} color={COLORS.text} name="pause"/>;
+            case TrackPlayer.STATE_PAUSED:
+                return <Ionicon size={iconSize} color={COLORS.text} name="play"/>;
+            default:
+                return <ActivityIndicator size={iconSize} color={COLORS.text}/>;
+        }
+    };
+
+    const handlePlayPause = (state) => {
+        if (TrackPlayer.STATE_PLAYING === state) {
+            onPause();
+        } else if (TrackPlayer.STATE_PAUSED === state) {
+            onPlay();
+        }
+    };
 
     return (
         <View style={{alignItems: 'center'}}>
@@ -12,19 +33,19 @@ function PlayerController() {
                 <TouchableHighlight
                     activeOpacity={0.6}
                     style={styles.btn}
-                    onPress={() => alert('Pressed!')}>
+                    onPress={() => onPrev()}>
                     <Ionicon size={iconSize} color={COLORS.text} name="ios-play-skip-back-sharp"/>
                 </TouchableHighlight>
                 <TouchableHighlight
                     activeOpacity={0.6}
                     style={styles.btn}
-                    onPress={() => alert('Pressed!')}>
-                    <Ionicon size={iconSize} color={COLORS.text} name="play"/>
+                    onPress={() => handlePlayPause(playbackState)}>
+                    {returnPlayBtn(playbackState)}
                 </TouchableHighlight>
                 <TouchableHighlight
                     activeOpacity={0.6}
                     style={styles.btn}
-                    onPress={() => alert('Pressed!')}>
+                    onPress={() => onNext()}>
                     <Ionicon size={iconSize} color={COLORS.text} name="ios-play-skip-forward-sharp"/>
                 </TouchableHighlight>
             </View>
@@ -44,8 +65,8 @@ const styles = StyleSheet.create({
         height: 40,
         alignItems: 'center',
         justifyContent: 'center',
-        borderRadius: 50
-    }
+        borderRadius: 50,
+    },
 });
 
 export default PlayerController;
